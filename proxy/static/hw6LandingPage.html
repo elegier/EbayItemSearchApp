@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<style>
+
+    body {
+        overflow: scroll;
+    }    
+
+    .container {
+        text-align: center;
+    }
+    
+    .shopping-label {
+        display: inline-block; 
+        font-size: 25px; 
+        font-family: sans-serif; 
+        font-weight: bold;
+        transform : translateY(-80%);
+        margin-left: -5px
+    }
+    
+    table.center {
+        margin-left:auto; 
+        margin-right:auto;
+    }
+    
+    tr.row {
+        outline: thin solid;
+        height: 32px;
+        border-bottom: 2px solid gainsboro;
+    }
+    
+    .content {
+        padding: 0 18px;
+        display: none;
+        overflow: hidden;
+        background-color: #dcdcdc;
+        border-color: black;
+    }
+    
+    .content-card {
+        width: 650px;
+        height: 200px;
+        display: block;
+        margin-bottom: 4px;
+        background-color: ghostwhite;
+        border-style: solid;
+        border-color: black;
+        display: flex;
+    }
+    
+    .content-card-image-column {
+        flex: 30%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-content: center;
+        padding-left: 30px;
+    }
+    
+    .content-card-image {
+        margin-left: 30px;
+        margin-right: 30px;
+    }
+    
+    .content-card-details-column {
+        flex: 70%;
+        text-align: left;
+    }
+    
+    .content-card-details-title {
+        font-weight: bold;
+        text-decoration: underline;
+        color : darkviolet;
+    }
+    
+    .content-card-details-category {
+        display: inline;
+    }
+    
+    .content-card-details-condition {
+        display: inline;
+    }
+    
+    .content-card-price-container {
+        display: inline;
+    }
+    
+    .content-card-price-div {
+        display: inline;
+    }
+    
+    .content-card-from-div {
+        display: inline;
+        padding-left: 5px;
+    }
+    
+    .content-card-close-div {
+        text-align: right;
+        font-size: 20px;
+        width: 30 px;
+    }
+</style>
+<script>
+    
+    
+    function executeSearch() {
+        var minPriceText = document.forms["myForm"]["minPrice"].value;
+        var maxPriceText = document.forms["myForm"]["maxPrice"].value;
+        
+        if (Number(minPriceText) < 0.0 || Number(maxPriceText) < 0.0) {
+            alert("Price Range values cannot be negative! Please try a value greater than or equal to 0.0");
+            return false;
+        }
+        else if (Number(minPriceText) > Number(maxPriceText)) {
+            alert("Oops! Lower price limit cannot be greater than the upper price limit! Please try again.");
+            return false;                
+        }
+        else {
+            makeRequest();
+            return true;
+        }
+    }
+    
+    function makeRequest() {
+        var xhr = new XMLHttpRequest();
+        query = prepareQuery();
+        
+        xhr.open("GET", "/search?" + query);
+        
+        xhr.onload = function (e) {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    handleResults(xhr.responseText);
+                    console.log(xhr.responseText);
+                    
+                } else {
+                    console.error(xhr.statusText);
+                }
+            }
+        };
+        
+        xhr.onerror = function (e) {
+            console.error(xhr.statusText);
+        };
+
+        xhr.send(null); 
+    }
+    
+    function prepareQuery() {
+        var itemIndex = 0;
+        params = []
+        
+        keywords = "keywords=" + document.getElementById("keyWords").value;
+        params.push(encodeURI(keywords));
+        
+        params.push("paginationInput.entriesPerPage=25");
+        
+        sortBy = document.getElementById("sortBy");
+        sortByValue = sortBy.options[sortBy.selectedIndex].value;
+        params.push("sortOrder=" + sortByValue);
+        
+        minPriceText = document.forms["myForm"]["minPrice"].value;
+        
+        if (minPriceText != "") {
+            params.push("itemFilter(" + itemIndex + ").name=MinPrice");
+            params.push("itemFilter(" + itemIndex + ").value=" + minPriceText);
+            params.push("itemFilter(" + itemIndex + ").paramName=Currency");
+            params.push("itemFilter(" + itemIndex + ").paramValue=USD"); 
+            itemIndex = itemIndex + 1;
+        }
+
+        maxPriceText = document.forms["myForm"]["maxPrice"].value;
+        
+        if (maxPriceText != "") {
+            params.push("itemFilter(" + itemIndex + ").name=MaxPrice");
+            params.push("itemFilter(" + itemIndex + ").value=" + maxPriceText);
+            params.push("itemFilter(" + itemIndex + ").paramName=Currency");
+            params.push("itemFilter(" + itemIndex + ").paramValue=USD"); 
+            itemIndex = itemIndex + 1;
+        }
+        
+        if (document.getElementById("newCheckBox").checked || document.getElementById("usedCheckBox").checked || document.getElementById("vGoodCheckBox").checked || document.getElementById("goodCheckBox").checked || document.getElementById("acceptableCheckBox").checked){
+            params.push("itemFilter(" + itemIndex + ").name=Condition");
+            
+            var conditionIndex = 0;
+            
+            if (document.getElementById("newCheckBox").checked) {
+                params.push("itemFilter(" + itemIndex + ").value(" + conditionIndex + ")=1000");
+                conditionIndex = conditionIndex + 1;
+            }
+            
+            if (document.getElementById("usedCheckBox").checked) {
+                params.push("itemFilter(" + itemIndex + ").value(" + conditionIndex + ")=3000");
+                conditionIndex = conditionIndex + 1;
+            }    
+            
+            if (document.getElementById("vGoodCheckBox").checked) {
+                params.push("itemFilter(" + itemIndex + ").value(" + conditionIndex + ")=4000");
+                conditionIndex = conditionIndex + 1;
+            }
+            
+            if (document.getElementById("goodCheckBox").checked) {
+                params.push("itemFilter(" + itemIndex + ").value(" + conditionIndex + ")=5000");
+                conditionIndex = conditionIndex + 1;
+            } 
+            
+            if (document.getElementById("goodCheckBox").checked) {
+                params.push("itemFilter(" + itemIndex + ").value(" + conditionIndex + ")=6000");
+                conditionIndex = conditionIndex + 1;
+            }
+            
+            itemIndex = itemIndex + 1;
+        }
+        
+        params.push("itemFilter(" + itemIndex + ").name=ReturnsAcceptedOnly");
+        
+        if (document.getElementById("returnAccepted").checked) {
+            params.push("itemFilter(" + itemIndex + ").value=true");
+        } else {
+            params.push("itemFilter(" + itemIndex + ").value=false");
+        }
+        
+        itemIndex = itemIndex + 1;
+        
+        params.push("itemFilter(" + itemIndex + ").name=FreeShippingOnly");
+        
+        if (document.getElementById("freeShipping").checked) {
+            params.push("itemFilter(" + itemIndex + ").value=true");
+        } else {
+            params.push("itemFilter(" + itemIndex + ").value=false");
+        }
+        
+        itemIndex = itemIndex + 1;
+        
+        if (document.getElementById("expeditedShipping").checked) {
+            params.push("itemFilter(" + itemIndex + ").name=ExpeditedShippingType");
+            params.push("itemFilter(" + itemIndex + ").value=Expedited");
+            itemIndex = itemIndex + 1;
+        } 
+        
+        query = params.join("&");
+        console.log(query);
+        
+        return query;
+    }
+    
+    function handleResults(ebayResponse) {
+        var obj = JSON.parse(ebayResponse);
+        document.getElementById("numResults").innerHTML = obj.findItemsAdvancedResponse[0].paginationOutput[0].totalEntries[0];
+        document.getElementById("keyWordsLabel").innerHTML = document.getElementById("keyWords").value;     
+        
+        for (i = 0; i < 10; i++) {
+            var newDiv = document.createElement("div"); 
+            newDiv.className += "content-card";
+            newDiv.id = "content-card" + i.toString(10);
+            newDiv.setAttribute("isOpen", "false");
+            
+            newDiv.addEventListener('click', function (event) {
+                openSummary(this.id);
+            });
+            
+            var imageDiv = document.createElement("div");
+            imageDiv.className += "content-card-image-column";
+            
+            var imageUrl = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].galleryURL[0];
+            var itemImage = document.createElement("img");
+            itemImage.className += "content-card-image";
+            itemImage.src = imageUrl;
+            imageDiv.appendChild(itemImage);
+            
+            newDiv.appendChild(imageDiv);
+            
+            var detailsDiv = document.createElement("div");
+            detailsDiv.className += "content-card-details-column";
+            
+            
+            var closeButtonContainer = document.createElement("div");
+            
+            var closeButtonDiv = document.createElement("div");
+            closeButtonDiv.className = "content-card-close-div";
+            closeButtonDiv.innerHTML = "+";
+            closeButtonDiv.id = i.toString(10);
+            closeButtonDiv.addEventListener('click', function (event) {
+                event.stopPropagation();
+                closeSummary(this.id);
+            });
+            
+            closeButtonContainer.appendChild(closeButtonDiv);
+            
+            detailsDiv.appendChild(closeButtonContainer);
+            
+            var title = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].title[0];
+            var titleUrl = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].viewItemURL[0];
+            var titleLink = document.createElement("a");
+            titleLink.href = titleUrl;
+            titleLink.innerHTML = title;
+            titleLink.setAttribute("target", "_blank");
+            titleLink.className += "content-card-details-title";
+            detailsDiv.appendChild(titleLink);
+            
+            var categoryContainerDiv = document.createElement("div");
+            
+            var categoryDiv = document.createElement("div");
+            categoryDiv.className += "content-card-details-category";
+            var category = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].primaryCategory[0].categoryName[0];
+            categoryDiv.innerHTML = "Category: " + category.italics();
+            categoryContainerDiv.appendChild(categoryDiv);
+            
+            var redirectImg = document.createElement("img");
+            redirectImg.src = "redirect.png";
+            redirectImg.setAttribute("width", "15px")
+            var redirectImgLink = document.createElement("a");
+            redirectImgLink.href = titleUrl;
+            redirectImgLink.setAttribute("target", "_blank");
+            redirectImgLink.appendChild(redirectImg);
+            categoryContainerDiv.appendChild(redirectImgLink);
+            
+            detailsDiv.appendChild(categoryContainerDiv);
+            
+            var conditionContainerDiv = document.createElement("div");
+            
+            var conditionDiv = document.createElement("div"); // medal hidden
+            conditionDiv.className += "content-card-details-condition";
+            var condition = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].condition[0].conditionDisplayName[0];
+            conditionDiv.innerHTML = "Condition: " + condition;
+            conditionContainerDiv.appendChild(conditionDiv);
+            
+            if (obj.findItemsAdvancedResponse[0].searchResult[0].item[i].topRatedListing[0] == "true") {
+                var topRatedImg = document.createElement("img");
+                topRatedImg.src = "topRatedImage.png";
+                topRatedImg.setAttribute("width", "20px")
+                conditionContainerDiv.appendChild(topRatedImg);
+            }
+            
+            detailsDiv.appendChild(conditionContainerDiv);
+            
+            var acceptsReturns = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].returnsAccepted[0];
+            var returnsText;
+            if (acceptsReturns == "true") {
+                returnsText = "Seller <b>accepts</b> returns"
+            } else {
+                returnsText = "Seller <b>does not accept</b> returns"
+            }
+            
+            var sellerAcceptsDiv = document.createElement("div"); // hidden
+            sellerAcceptsDiv.innerHTML = returnsText;
+            //sellerAcceptsDiv.className += "content-card-image-column";
+            detailsDiv.appendChild(sellerAcceptsDiv);
+            
+            var freeShipping = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].shippingInfo[0].shippingServiceCost[0];
+            var shippingText;
+            if (freeShipping == "0.0") {
+                shippingText = "Free Shipping";
+            } else {
+                shippingText = "No Free Shipping";
+            }
+            
+            var expeditedShipping = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].shippingInfo[0].expeditedShipping[0];
+            if (expeditedShipping == "true") {
+                shippingText += " -- Expedited Shipping Available";
+            }
+            
+            var shippingDiv = document.createElement("div"); 
+            shippingDiv.innerHTML = shippingText;
+            //shippingDiv.className += "content-card-image-column";
+            detailsDiv.appendChild(shippingDiv);
+            
+            var priceContainerDiv = document.createElement("div"); 
+            priceContainerDiv.className = "content-card-price-container";
+            
+            var priceText = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].sellingStatus[0].convertedCurrentPrice[0].__value__;
+            var shippingPriceText = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].shippingInfo[0].shippingServiceCost[0].__value__;
+            
+            var totalPrice = priceText;
+            
+            if (Number(shippingPriceText) > 0) {
+                totalPrice += " (+ $" + shippingPriceText + " for shipping)";
+            }
+            
+            var priceDiv = document.createElement("div"); // location hidden
+            priceDiv.className = "content-card-price-div";
+            priceDiv.innerHTML = "<b>Price: " + totalPrice + "</b>";
+            priceContainerDiv.appendChild(priceDiv);
+            
+            
+            var shipsFromText = obj.findItemsAdvancedResponse[0].searchResult[0].item[i].location[0];
+            var shipsFromDiv = document.createElement("div"); // location hidden
+            shipsFromDiv.className = "content-card-from-div";
+            shipsFromDiv.innerHTML = "From: " + shipsFromText.italics();
+            // priceDiv.className += "content-card-image-column";
+            priceContainerDiv.appendChild(shipsFromDiv); 
+            detailsDiv.appendChild(priceContainerDiv);
+
+            newDiv.appendChild(detailsDiv);  
+
+            // add the newly created element and its content into the DOM 
+            var currentDiv = document.getElementById("results-content"); 
+            currentDiv.appendChild(newDiv)
+            
+        };
+        
+        
+        document.getElementById("results-container").style.visibility = "visible";
+    }
+    
+    function clearForm() {
+        document.getElementById("myForm").reset();
+        
+        const parent = document.getElementById("results-content");
+        while (parent.firstChild) {
+            parent.firstChild.remove();
+        }
+        
+        document.getElementById("results-container").style.visibility = "hidden";
+        
+    }
+    
+    function focusClearButton() {
+        document.getElementById("clearButton").style.background='#4CAF50';
+        document.getElementById("clearButton").style.color='#FFFFFF';
+    }
+    
+    function focusSearchButton() {
+        document.getElementById("searchButton").style.background='#4CAF50';
+        document.getElementById("searchButton").style.color='#FFFFFF';
+    }
+    
+    function unfocusClearButton() {
+        document.getElementById("clearButton").style.background='#dcdcdc';
+        document.getElementById("clearButton").style.color='#000000';
+    }
+    
+    function unfocusSearchButton() {
+        document.getElementById("searchButton").style.background='#dcdcdc';
+        document.getElementById("searchButton").style.color='#000000';
+    }
+    
+    function openSummary(id) {
+        var currentDiv = document.getElementById(id); 
+        
+        var state = currentDiv.getAttribute("isOpen");
+        
+        if (state == "false") {
+            currentDiv.style.height='250px';
+            currentDiv.setAttribute("isOpen", "true");
+        } 
+    }
+    
+    function closeSummary(id) {
+        var currentDiv = document.getElementById("content-card" + id); 
+        
+        var state = currentDiv.getAttribute("isOpen");
+        
+        if (state == "true") {
+            currentDiv.style.height='200px';
+            currentDiv.setAttribute("isOpen", "false");
+        } 
+    }
+</script>
+<body>
+    <div class="container" style="text-align: center">
+        <div class="logo-row" style="align-content: center">
+            <img src="eBayLogo.png" style="width:160px; display: inline-block">
+            <div class="shopping-label">Shopping</div>
+        </div>
+        <div class="filter-table">
+            <form name="myForm" onsubmit="return false" id="myForm">
+                <table class="center" style="width:500px">
+                    <tr class="row">
+                        <td>
+                            <div style="display:inline; padding-left: 5px; font-weight: bold">Key Words</div>
+                            <div style="display:inline; color: #FF0504">*</div>
+                            <div style="display:inline; padding-right: 5px">:</div>
+                            <input type="text" style="display:inline" required name="keyWords" id="keyWords">
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>
+                            <div style="display:inline; padding-right: 10px; font-weight: bold">Price Range:</div>
+                            <div style="display:inline; padding-right: 7px">From</div>
+                            <input type="number" style="display:inline;" size="6" name="minPrice" id="minPrice">
+                            <div style="display:inline; padding-left: 7px; padding-right: 7px">to</div>
+                            <input type="number" style="display:inline" size="6" name="maxPrice" id="maxPrice">
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>
+                            <div style="display:inline; padding-right: 5px; font-weight: bold">Condition:</div>
+                            <input type="checkbox" style="display:inline;" id="newCheckBox">
+                            <label style="display:inline;">New</label>
+                            <input type="checkbox" style="display:inline;" id="usedCheckBox">
+                            <label style="display:inline;">Used</label>
+                            <input type="checkbox" style="display:inline;" id="vGoodCheckBox">
+                            <label style="display:inline;">Very Good</label>
+                            <input type="checkbox" style="display:inline;" id="goodCheckBox">
+                            <label style="display:inline;">Good</label>
+                            <input type="checkbox" style="display:inline;" id="acceptableCheckBox">
+                            <label style="display:inline;">Acceptable</label>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>
+                            <div style="display:inline; font-weight: bold">Seller:</div>
+                            <input type="checkbox" style="display:inline;" id="returnAccepted">
+                            <label style="display:inline;">Return Accepted</label>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>
+                            <div style="display:inline; font-weight: bold">Shipping:</div>
+                            <input type="checkbox" style="display:inline;" id="freeShipping">
+                            <label style="display:inline;">Free</label>
+                            <input type="checkbox" style="display:inline;" id="expeditedShipping">
+                            <label style="display:inline;">Expedited</label>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>
+                            <div style="display:inline; padding-right: 5px; font-weight: bold">Sort by:</div>
+                            <select style="display:inline; width: 215px; text-align-last:center;" id="sortBy">
+                                <option value="BestMatch">Best Match</option>
+                                <option value="CurrentPriceHighest">Price: highest first</option>
+                                <option value="PricePlusShippingHighest">Price + Shipping: highest first</option>
+                                <option value="PricePlusShippingLowest">Price + Shipping: lowest first</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr class="row">
+                        <td>
+                            <button onclick="clearForm()" style="display:inline; background-color: gainsboro" onmouseover="focusClearButton()" id="clearButton" onmouseout="unfocusClearButton()">Clear</button>
+                            <input type="submit" value="Search" style="display:inline; background-color: gainsboro" onclick="executeSearch()" onmouseover="focusSearchButton()" id="searchButton" onmouseout="unfocusSearchButton()">
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+        <div id="results-container" style="visibility: hidden; padding-top: 20px">
+            <div style="width : 650px; display: inline-block">
+                <div id="results-title" style="border-bottom: 2px solid gainsboro; padding-bottom: 10px">
+                    <div id="numResults" style="display: inline-block; font-size: 28px; font-weight: bold; padding-right: 5px"></div>
+                    <div style="display: inline-block; font-size: 28px; font-weight: bold; padding-right: 5px">Results found for</div>
+                    <div id="keyWordsLabel" style="display: inline-block; font-size: 28px; font-style: italic; font-weight: bold"></div>
+                </div> 
+                <div id="results-content" style="align-content: center; padding-top: 10px">
+                
+                </div>
+            </div>       
+        </div>
+    </div>
+</body>
+</html>
